@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 早餐订单管理后台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .header h1 {
+            color: #4A148C;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .orders-section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .order-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        
+        .filter-btn {
+            padding: 8px 20px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .orders-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .order-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .order-user {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .order-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .order-items {
+            margin: 15px 0;
+        }
+        
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed #ddd;
+        }
+        
+        .order-total {
+            font-weight: bold;
+            font-size: 18px;
+            color: #333;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #e0e0e0;
+        }
+        
+        .order-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .action-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .paid-btn {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .delivered-btn {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .pending { color: #FF9800; }
+        .paid { color: #4CAF50; }
+        .delivered { color: #2196F3; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+        
+        .data-actions {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .export-btn {
+            padding: 12px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        
+        .clear-btn {
+            padding: 12px 20px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        
+        .import-btn {
+            padding: 12px 20px;
+            background: #FF9800;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .summary-table th, .summary-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .summary-table th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 早餐订单管理后台</h1>
+            <p>👋 你好，早餐小天使！这是今日所有订单</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">今日订单</div>
+                <div class="stat-value" id="todayOrders">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">待支付</div>
+                <div class="stat-value" id="pendingPayments">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">已支付</div>
+                <div class="stat-value" id="paidOrders">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">今日总额</div>
+                <div class="stat-value" id="todayTotal">¥0</div>
+            </div>
+        </div>
+        
+        <div class="orders-section">
+            <div class="section-title">
+                <span>📋 所有订单</span>
+                <button class="filter-btn active" onclick="filterOrders('all')">全部</button>
+            </div>
+            
+            <div class="order-filters">
+                <button class="filter-btn" onclick="filterOrders('today')">今日</button>
+                <button class="filter-btn" onclick="filterOrders('unpaid')">待支付</button>
+                <button class="filter-btn" onclick="filterOrders('paid')">已支付</button>
+                <button class="filter-btn" onclick="filterOrders('pending')">未处理</button>
+            </div>
+            
+            <div class="orders-list" id="ordersList">
+                <div class="empty-state">
+                    <div style="font-size: 60px; margin-bottom: 20px;">📭</div>
+                    <p>暂无订单</p>
+                    <p style="font-size: 14px; margin-top: 10px;">订单会在这里实时显示</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="data-actions">
+            <h3>📁 数据管理</h3>
+            <div class="action-buttons">
+                <button class="export-btn" onclick="exportOrders()">📥 导出订单</button>
+                <button class="import-btn" onclick="importOrders()">📤 导入数据</button>
+                <button class="clear-btn" onclick="clearAllOrders()">🗑️ 清空数据</button>
+            </div>
+        </div>
+        
+        <div class="summary-section" style="margin-top: 30px;">
+            <h3>📈 每日汇总</h3>
+            <table class="summary-table" id="dailySummary">
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>订单数</th>
+                        <th>总金额</th>
+                        <th>已支付</th>
+                        <th>待支付</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 汇总数据会动态生成 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">
+        操作成功！
+    </div>
+
+    <script>
+        // 模拟订单数据（实际应从localStorage或服务器获取）
+        let orders = JSON.parse(localStorage.getItem('breakfastOrders') || '[]');
+        let currentFilter = 'all';
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStats();
+            renderOrders();
+            renderDailySummary();
+            
+            // 模拟新订单提醒
+            setInterval(checkNewOrders, 5000);
+        });
+        
+        function updateStats() {
+            const today = new Date().toLocaleDateString('zh-CN');
+            
+            const todayOrders = orders.filter(order => order.date === today);
+            const pendingPayments = orders.filter(order => order.paymentStatus === 'unpaid');
+            const paidOrders = orders.filter(order => order.paymentStatus === 'paid');
+            
+            const todayTotal = todayOrders.reduce((sum, order) => sum + order.total, 0);
+            
+            document.getElementById('todayOrders').textContent = todayOrders.length;
+            document.getElementById('pendingPayments').textContent = pendingPayments.length;
+            document.getElementById('paidOrders').textContent = paidOrders.length;
+            document.getElementById('todayTotal').textContent = `¥${todayTotal.toFixed(2)}`;
+        }
+        
+        function filterOrders(filter) {
+            currentFilter = filter;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            renderOrders();
+        }
+        
+        function renderOrders() {
+            const ordersList = document.getElementById('ordersList');
+            
+            let filteredOrders = orders;
+            const today = new Date().toLocaleDateString('zh-CN');
+            
+            switch(currentFilter) {
+                case 'today':
+                    filteredOrders = orders.filter(order => order.date === today);
+                    break;
+                case 'unpaid':
+                    filteredOrders = orders.filter(order => order.paymentStatus === 'unpaid');
+                    break;
+                case 'paid':
+                    filteredOrders = orders.filter(order => order.paymentStatus === 'paid');
+                    break;
+                case 'pending':
+                    filteredOrders = orders.filter(order => order.status === 'pending');
+                    break;
+            }
+            
+            if (filteredOrders.length === 0) {
+                ordersList.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 60px; margin-bottom: 20px;">📭</div>
+                        <p>暂无订单</p>
+                        <p style="font-size: 14px; margin-top: 10px;">当前筛选条件下没有订单</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            ordersList.innerHTML = '';
+            
+            filteredOrders.forEach((order, index) => {
+                const orderElement = document.createElement('div');
+                orderElement.className = 'order-card';
+                
+                const itemsHtml = order.items.map(item => `
+                    <div class="order-item">
+                        <span>${item.name} × ${item.quantity}</span>
+                        <span>¥${item.subtotal.toFixed(2)}</span>
+                    </div>
+                `).join('');
+                
+                const paymentBadge = order.paymentStatus === 'paid' ? 
+                    '<span class="paid">✅ 已支付</span>' : 
+                    '<span class="pending">⏳ 待支付</span>';
+                
+                const statusBadge = order.status === 'delivered' ?
+                    '<span class="delivered">✅ 已完成</span>' :
+                    '<span class="pending">⏳ 处理中</span>';
+                
+                orderElement.innerHTML = `
+                    <div class="order-header">
+                        <div>
+                            <div class="order-user">${order.userName}</div>
+                            <div class="order-meta">
+                                <span>订单号: ${order.id.substr(0, 8)}</span>
+                                <span>${order.date}</span>
+                                ${paymentBadge}
+                                ${statusBadge}
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size: 24px; font-weight: bold; color: #333;">
+                                ¥${order.total.toFixed(2)}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="order-items">
+                        ${itemsHtml}
+                    </div>
+                    
+                    <div class="order-total">
+                        <span>订单总额：</span>
+                        <span>¥${order.total.toFixed(2)}</span>
+                    </div>
+                    
+                    <div class="order-actions">
+                        ${order.paymentStatus === 'unpaid' ? 
+                            `<button class="action-btn paid-btn" onclick="markAsPaid('${order.id}')">标记为已支付</button>` : ''}
+                        ${order.status !== 'delivered' ? 
+                            `<button class="action-btn delivered-btn" onclick="markAsDelivered('${order.id}')">标记为已完成</button>` : ''}
+                        <button class="action-btn" onclick="contactUser('${order.userName}')" style="background: #9C27B0; color: white;">
+                            联系用户
+                        </button>
+                    </div>
+                `;
+                
+                ordersList.appendChild(orderElement);
+            });
+        }
+        
+        function markAsPaid(orderId) {
+            orders = orders.map(order => {
+                if (order.id === orderId) {
+                    order.paymentStatus = 'paid';
+                }
+                return order;
+            });
+            
+            localStorage.setItem('breakfastOrders', JSON.stringify(orders));
+            renderOrders();
+            updateStats();
+            showNotification('订单已标记为已支付');
+        }
+        
+        function markAsDelivered(orderId) {
+            orders = orders.map(order => {
+                if (order.id === orderId) {
+                    order.status = 'delivered';
+                }
+                return order;
+            });
+            
+            localStorage.setItem('breakfastOrders', JSON.stringify(orders));
+            renderOrders();
+            showNotification('订单已标记为已完成');
+        }
+        
+        function contactUser(userName) {
+            alert(`联系 ${userName} 确认订单`);
+        }
+        
+        function exportOrders() {
+            const dataStr = JSON.stringify(orders, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `早餐订单_${new Date().toLocaleDateString('zh-CN')}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            showNotification('订单已导出为JSON文件');
+        }
+        
+        function importOrders() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        const importedOrders = JSON.parse(e.target.result);
+                        orders = importedOrders;
+                        localStorage.setItem('breakfastOrders', JSON.stringify(orders));
+                        renderOrders();
+                        updateStats();
+                        renderDailySummary();
+                        showNotification('数据导入成功！');
+                    } catch (error) {
+                        alert('导入失败，文件格式错误');
+                    }
+                };
+                
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+        
+        function clearAllOrders() {
+            if (confirm('确定要清空所有订单数据吗？此操作不可撤销！')) {
+                orders = [];
+                localStorage.removeItem('breakfastOrders');
+                renderOrders();
+                updateStats();
+                renderDailySummary();
+                showNotification('所有订单已清空');
+            }
+        }
+        
+        function renderDailySummary() {
+            const summaryTable = document.querySelector('#dailySummary tbody');
+            const summary = {};
+            
+            orders.forEach(order => {
+                if (!summary[order.date]) {
+                    summary[order.date] = {
+                        totalAmount: 0,
+                        orderCount: 0,
+                        paidCount: 0,
+                        unpaidCount: 0
+                    };
+                }
+                
+                summary[order.date].orderCount++;
+                summary[order.date].totalAmount += order.total;
+                
+                if (order.paymentStatus === 'paid') {
+                    summary[order.date].paidCount++;
+                } else {
+                    summary[order.date].unpaidCount++;
+                }
+            });
+            
+            let html = '';
+            
+            Object.entries(summary).sort((a, b) => b[0].localeCompare(a[0])).forEach(([date, data]) => {
+                html += `
+                    <tr>
+                        <td>${date}</td>
+                        <td>${data.orderCount}</td>
+                        <td>¥${data.totalAmount.toFixed(2)}</td>
+                        <td>${data.paidCount}</td>
+                        <td>${data.unpaidCount}</td>
+                    </tr>
+                `;
+            });
+            
+            summaryTable.innerHTML = html || '<tr><td colspan="5" style="text-align:center;color:#999;">暂无数据</td></tr>';
+        }
+        
+        function checkNewOrders() {
+            // 这里可以检查是否有新订单
+            // 实际应用中应该从服务器获取
+        }
+        
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
